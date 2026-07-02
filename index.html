@@ -610,12 +610,22 @@
         </div>
 
         <!-- Discurs -->
-        <div class="field" style="margin-bottom:0">
+        <div class="field">
           <label>Discurs</label>
           <div class="lever-wrap">
             <div class="lever-extremes"><span>🔇 Cap discurs</span><span>🎤 Discurs de 20'</span></div>
             <input type="range" id="s-speech" min="0" max="4" step="1" value="0" oninput="updateLever('speech', this.value)" />
             <div class="lever-value-chip" id="v-speech"></div>
+          </div>
+        </div>
+
+        <!-- Invitació -->
+        <div class="field" style="margin-bottom:0">
+          <label>Invitació</label>
+          <div class="lever-wrap">
+            <div class="lever-extremes"><span>🙋 Individual</span><span>👥 + 1 + convidats</span></div>
+            <input type="range" id="s-invitation" min="0" max="2" step="1" value="0" oninput="updateLever('invitation', this.value)" />
+            <div class="lever-value-chip" id="v-invitation"></div>
           </div>
         </div>
       </div>
@@ -647,6 +657,23 @@
             <input type="checkbox" id="r-corp" value="Soci corporatiu" /><label for="r-corp">Soci corporatiu</label>
             <input type="checkbox" id="r-pres" value="President d'honor" /><label for="r-pres">President d'honor</label>
             <input type="checkbox" id="r-inst" value="Institucional" /><label for="r-inst">Institucional</label>
+            <input type="checkbox" id="r-intern" value="Acte intern Barcelona Global" /><label for="r-intern">Acte intern BG</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Membres de BG que assisteixen</label>
+          <div class="pill-group">
+            <input type="radio" name="members" id="mem-president" value="President" checked />
+            <label for="mem-president">President</label>
+            <input type="radio" name="members" id="mem-mc" value="President i MC" />
+            <label for="mem-mc">President i MC</label>
+            <input type="radio" name="members" id="mem-mcmp" value="President i MC &amp; MP" />
+            <label for="mem-mcmp">President i MC &amp; MP</label>
+            <input type="radio" name="members" id="mem-gestio" value="President i Equip gestió BG" />
+            <label for="mem-gestio">President i Equip gestió BG</label>
+            <input type="radio" name="members" id="mem-tot" value="President i tot l'Equip BG" />
+            <label for="mem-tot">President i tot l'Equip BG</label>
           </div>
         </div>
 
@@ -695,12 +722,13 @@
 
   // ── Lever config ──
   const LEVERS = {
-    dress:    ['Informal (shorts)', 'Casual', 'Smart casual', 'Formal', 'Black tie'],
-    presence: ['Passar desapercebut', 'Presència discreta', 'Presència equilibrada', 'Visible', 'Saludar activament'],
-    seat:     ['Sense seient', 'Seient general', 'Seient preferent', 'Presidència reservada'],
-    speech:   ['Cap discurs', "Breu intervenció (5')", "Intervenció (10')", "Intervenció (15')", "Discurs (20')"]
+    dress:      ['Informal (shorts)', 'Casual', 'Smart casual', 'Formal', 'Black tie'],
+    presence:   ['Passar desapercebut', 'Presència discreta', 'Presència equilibrada', 'Visible', 'Saludar activament'],
+    seat:       ['Sense seient', 'Seient general', 'Seient preferent', 'Presidència reservada'],
+    speech:     ['Cap discurs', "Breu intervenció (5')", "Intervenció (10')", "Intervenció (15')", "Discurs (20')"],
+    invitation: ['Invitació individual', 'Invitació + 1', 'Invitació + 1 + convidats']
   };
-  const LEVER_MAX = { dress: 4, presence: 4, seat: 3, speech: 4 };
+  const LEVER_MAX = { dress: 4, presence: 4, seat: 3, speech: 4, invitation: 2 };
 
   function updateLever(key, val) {
     document.getElementById('v-' + key).textContent = LEVERS[key][val];
@@ -709,6 +737,7 @@
   updateLever('presence', 2);
   updateLever('seat', 1);
   updateLever('speech', 0);
+  updateLever('invitation', 0);
 
   // ── View switching ──
   let currentView = 'form';
@@ -743,17 +772,19 @@
     btn.disabled = true;
     btn.textContent = 'Enviant...';
 
-    const dress    = parseInt(document.getElementById('s-dress').value);
-    const presence = parseInt(document.getElementById('s-presence').value);
-    const seat     = parseInt(document.getElementById('s-seat').value);
-    const speech   = parseInt(document.getElementById('s-speech').value);
+    const dress      = parseInt(document.getElementById('s-dress').value);
+    const presence   = parseInt(document.getElementById('s-presence').value);
+    const seat       = parseInt(document.getElementById('s-seat').value);
+    const speech     = parseInt(document.getElementById('s-speech').value);
+    const invitation = parseInt(document.getElementById('s-invitation').value);
     const attendance = document.querySelector('input[name="attendance"]:checked').value;
-    const reasons  = Array.from(document.querySelectorAll('.tag-group input:checked')).map(e => e.value);
-    const notes    = document.getElementById('f-notes').value.trim();
+    const members    = document.querySelector('input[name="members"]:checked').value;
+    const reasons    = Array.from(document.querySelectorAll('.tag-group input:checked')).map(e => e.value);
+    const notes      = document.getElementById('f-notes').value.trim();
 
     const { error } = await db.from('bg_events').insert({
       name, date, time: time || null, location: location || null,
-      dress, presence, seat, speech, attendance, reasons,
+      dress, presence, seat, speech, invitation, attendance, members, reasons,
       notes: notes || null
     });
 
@@ -771,11 +802,13 @@
     document.getElementById('f-time').value = '';
     document.getElementById('f-location').value = '';
     document.getElementById('f-notes').value = '';
-    document.getElementById('s-dress').value = 2;    updateLever('dress', 2);
-    document.getElementById('s-presence').value = 2; updateLever('presence', 2);
-    document.getElementById('s-seat').value = 1;     updateLever('seat', 1);
-    document.getElementById('s-speech').value = 0;   updateLever('speech', 0);
+    document.getElementById('s-dress').value = 2;       updateLever('dress', 2);
+    document.getElementById('s-presence').value = 2;    updateLever('presence', 2);
+    document.getElementById('s-seat').value = 1;        updateLever('seat', 1);
+    document.getElementById('s-speech').value = 0;      updateLever('speech', 0);
+    document.getElementById('s-invitation').value = 0;  updateLever('invitation', 0);
     document.getElementById('att-full').checked = true;
+    document.getElementById('mem-president').checked = true;
     document.querySelectorAll('.tag-group input').forEach(e => e.checked = false);
 
     showToast('✓ Event enviat al President');
@@ -825,10 +858,11 @@
       const month = d ? MONTHS[d.getMonth()] : '';
       const timeStr = evt.time ? ` · ${evt.time.slice(0,5)}h` : '';
 
-      const dressPct    = Math.round((evt.dress / LEVER_MAX.dress) * 100);
-      const presencePct = Math.round((evt.presence / LEVER_MAX.presence) * 100);
-      const seatPct     = Math.round((evt.seat / LEVER_MAX.seat) * 100);
-      const speechPct   = Math.round((evt.speech / LEVER_MAX.speech) * 100);
+      const dressPct      = Math.round((evt.dress / LEVER_MAX.dress) * 100);
+      const presencePct   = Math.round((evt.presence / LEVER_MAX.presence) * 100);
+      const seatPct       = Math.round((evt.seat / LEVER_MAX.seat) * 100);
+      const speechPct     = Math.round((evt.speech / LEVER_MAX.speech) * 100);
+      const invitationPct = Math.round(((evt.invitation ?? 0) / LEVER_MAX.invitation) * 100);
 
       const reasonBadges = (evt.reasons || []).length
         ? evt.reasons.map(r => `<span class="badge badge-reason">${r}</span>`).join('')
@@ -858,10 +892,12 @@
             ${ldBlock('Presència activa', LEVERS.presence[evt.presence], presencePct)}
             ${ldBlock('Seients', LEVERS.seat[evt.seat], seatPct)}
             ${ldBlock('Discurs', LEVERS.speech[evt.speech], speechPct)}
+            ${ldBlock('Invitació', LEVERS.invitation[evt.invitation ?? 0], invitationPct)}
           </div>
 
           <div class="tags-row">
             <span class="badge badge-att">${evt.attendance}</span>
+            <span class="badge" style="background:rgba(13,13,138,0.08);color:#0d0d8a;">👥 ${evt.members || 'President'}</span>
             ${reasonBadges}
           </div>
           ${notesHtml}
