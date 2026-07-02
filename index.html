@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSanfeliu Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ── Tokens — JSanfeliu Connect palette ── */
+    :root {
+      --sidebar-bg:    #0d0d8a;
+      --sidebar-text:  rgba(255,255,255,0.82);
+      --active-bg:     rgba(255,255,255,0.18);
+      --active-text:   #ffffff;
+      --accent:        #7b7bff;
+      --border-side:   rgba(255,255,255,0.12);
+      --page-bg:       #f0f2fa;
+      --surface:       #ffffff;
+      --text:          #111827;
+      --muted:         #6b7280;
+      --border:        #e5e7eb;
+      --danger:        #dc2626;
+      --radius:        14px;
+      --shadow:        0 2px 20px rgba(13,13,138,0.10);
+      --shadow-lg:     0 8px 32px rgba(13,13,138,0.15);
+      --font:          'Inter', -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--page-bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════ */
+    #sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .sb-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid var(--border-side);
+    }
+    .sb-logo svg { flex-shrink: 0; }
+    .sb-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--sidebar-text);
+      line-height: 1.2;
+    }
+    .sb-title span { color: var(--accent); }
+
+    .sb-nav { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--sidebar-text);
+      transition: background 0.18s, color 0.18s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sb-item:hover { background: rgba(255,255,255,0.10); }
+    .sb-item.active { background: var(--active-bg); color: var(--active-text); }
+    .sb-item svg { width: 17px; height: 17px; opacity: 0.85; flex-shrink: 0; }
+
+    .sb-footer {
+      padding: 16px 18px;
+      border-top: 1px solid var(--border-side);
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ═══════════════════════════════
+       MAIN
+    ═══════════════════════════════ */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 36px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: 0 1px 6px rgba(13,13,138,0.06);
+    }
+    .topbar-title { font-size: 17px; font-weight: 700; color: var(--sidebar-bg); }
+    .topbar-count {
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 3px 12px;
+    }
+
+    /* Content area */
+    .content { padding: 32px 36px 60px; max-width: 860px; }
+
+    /* ═══════════════════════════════
+       CARD
+    ═══════════════════════════════ */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(13,13,138,0.05);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+      opacity: 0.3;
+    }
+
+    /* ═══════════════════════════════
+       FORM FIELDS
+    ═══════════════════════════════ */
+    .field { margin-bottom: 24px; }
+    .field:last-child { margin-bottom: 0; }
+    .field > label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .field input[type="text"],
+    .field input[type="date"],
+    .field input[type="time"],
+    .field textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: var(--font);
+      color: var(--text);
+      background: #fafbff;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      outline: none;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(123,123,255,0.15);
+      background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 90px; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:580px){ .row-2{ grid-template-columns:1fr; } }
+
+    /* ═══════════════════════════════
+       SLIDERS — Large
+    ═══════════════════════════════ */
+    .lever-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .lever-extremes {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 6px;
+      background: linear-gradient(to right, var(--sidebar-bg), var(--accent));
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--sidebar-bg);
+      border: 4px solid #fff;
+      box-shadow: 0 2px 10px rgba(13,13,138,0.35);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      box-shadow: 0 3px 14px rgba(13,13,138,0.45);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--sidebar-bg);
+      border: 4px solid #fff;
+      box-shadow: 0 2px 10px rgba(13,13,138,0.35);
+      cursor: pointer;
+    }
+
+    .lever-value-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--sidebar-bg), var(--accent));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+      align-self: center;
+      min-width: 180px;
+      text-align: center;
+      margin-top: 2px;
+      box-shadow: 0 2px 8px rgba(13,13,138,0.2);
+    }
+
+    /* ═══════════════════════════════
+       PILLS & TAGS
+    ═══════════════════════════════ */
+    .pill-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .pill-group input[type="radio"] { display: none; }
+    .pill-group label {
+      padding: 10px 22px;
+      border: 2px solid var(--border);
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .pill-group input[type="radio"]:checked + label {
+      background: var(--sidebar-bg);
+      color: #fff;
+      border-color: var(--sidebar-bg);
+      box-shadow: 0 2px 10px rgba(13,13,138,0.25);
+    }
+    .pill-group label:hover { border-color: var(--accent); color: var(--accent); }
+
+    .tag-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tag-group input[type="checkbox"] { display: none; }
+    .tag-group label {
+      padding: 9px 18px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.18s;
+      user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tag-group input[type="checkbox"]:checked + label {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 10px rgba(123,123,255,0.3);
+    }
+    .tag-group label:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ═══════════════════════════════
+       BUTTONS
+    ═══════════════════════════════ */
+    .btn-primary {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--accent) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+      box-shadow: 0 4px 18px rgba(13,13,138,0.3);
+    }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(13,13,138,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-danger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 20px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: color 0.18s, background 0.18s;
+      line-height: 1;
+    }
+    .btn-danger:hover { color: var(--danger); background: #fef2f2; }
+
+    /* ═══════════════════════════════
+       DASHBOARD EVENT CARDS
+    ═══════════════════════════════ */
+    .event-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(13,13,138,0.06);
+      border-left: 5px solid var(--sidebar-bg);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      transition: box-shadow 0.18s, transform 0.18s;
+    }
+    .event-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+
+    .ec-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 14px; }
+    .ec-name { font-size: 18px; font-weight: 800; color: var(--sidebar-bg); }
+    .ec-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+    .ec-date-badge {
+      background: var(--sidebar-bg);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 14px;
+      text-align: center;
+      min-width: 64px;
+      flex-shrink: 0;
+    }
+    .ec-date-badge .day { font-size: 24px; font-weight: 800; line-height: 1; }
+    .ec-date-badge .month { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; margin-top: 1px; }
+
+    /* Levers grid in card */
+    .levers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .ld-block {
+      background: var(--page-bg);
+      border-radius: 10px;
+      padding: 11px 14px;
+      border: 1px solid rgba(13,13,138,0.06);
+    }
+    .ld-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 7px; }
+    .ld-bar-track { background: #e5e7eb; border-radius: 4px; height: 7px; overflow: hidden; }
+    .ld-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--sidebar-bg), var(--accent)); }
+    .ld-val { font-size: 12px; font-weight: 700; color: var(--sidebar-bg); margin-top: 5px; }
+
+    /* Tags row */
+    .tags-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-att { background: rgba(13,13,138,0.1); color: var(--sidebar-bg); }
+    .badge-reason { background: rgba(123,123,255,0.15); color: #4b4bcc; }
+
+    .ec-notes {
+      font-size: 12.5px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    /* ═══════════════════════════════
+       EMPTY + LOADING
+    ═══════════════════════════════ */
+    .empty-state {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-state p { font-size: 15px; }
+
+    .loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 48px; color: var(--muted); font-size: 14px; }
+    .spinner { width: 22px; height: 22px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════
+       TOAST
+    ═══════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--sidebar-bg);
+      color: #fff;
+      padding: 13px 26px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 6px 24px rgba(13,13,138,0.3);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ═══════════════════════════════
+       VIEWS
+    ═══════════════════════════════ */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Mobile */
+    @media(max-width: 700px) {
+      #sidebar { display: none; }
+      .topbar { padding: 0 18px; }
+      .content { padding: 20px 18px 60px; }
+      .card { padding: 20px 18px; }
+      .mobile-nav { display: flex !important; }
+    }
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--sidebar-bg);
+      z-index: 100;
+      border-top: 1px solid var(--border-side);
+    }
+    .mobile-nav button {
+      flex: 1;
+      padding: 12px 4px;
+      background: none;
+      border: none;
+      color: var(--sidebar-text);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font);
+    }
+    .mobile-nav button.active { color: var(--accent); }
+    .mobile-nav button svg { width: 20px; height: 20px; }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">
+      <svg viewBox="0 0 32 32" width="30" height="30" fill="none" aria-label="JSanfeliu logo">
+        <circle cx="16" cy="16" r="15" fill="hsl(222,47%,18%)" stroke="hsl(42,80%,55%)" stroke-width="1.5"/>
+        <circle cx="10" cy="16" r="3" fill="hsl(42,80%,55%)"/>
+        <circle cx="22" cy="10" r="3" fill="hsl(220,20%,75%)"/>
+        <circle cx="22" cy="22" r="3" fill="hsl(220,20%,75%)"/>
+        <line x1="13" y1="14.5" x2="19" y2="11.5" stroke="hsl(42,80%,55%)" stroke-width="1.5"/>
+        <line x1="13" y1="17.5" x2="19" y2="20.5" stroke="hsl(42,80%,55%)" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="sb-title">JSanfeliu<span>Events</span></div>
+  </div>
+
+  <nav class="sb-nav">
+    <button class="sb-item active" onclick="showView('form')" id="nav-form">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Nou Event
+    </button>
+    <button class="sb-item" onclick="showView('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Events del President
+    </button>
+  </nav>
+
+  <div class="sb-footer">Barcelona Global · 2026</div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">Nou Event</span>
+    <span class="topbar-count" id="topbar-count" style="display:none"></span>
+  </div>
+
+  <!-- ── FORM VIEW ── -->
+  <div class="content">
+    <div id="view-form" class="view active">
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Informació de l'event
+        </div>
+
+        <div class="field">
+          <label>Nom de l'event</label>
+          <input type="text" id="f-name" placeholder="Ex: Fòrum Smart City 2026" />
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="f-date" />
+          </div>
+          <div class="field">
+            <label>Hora d'inici</label>
+            <input type="time" id="f-time" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label>Lloc / Espai</label>
+          <input type="text" id="f-location" placeholder="Ex: Palau Robert, Barcelona" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12M4.93 4.93A10 10 0 0 0 3 12"/><path d="M7.76 16.24A6 6 0 0 0 18 12M7.76 7.76A6 6 0 0 1 18 12"/></svg>
+          Levers de presència
+        </div>
+
+        <!-- Dress code -->
+        <div class="field">
+          <label>Dress Code</label>
+          <div class="lever-wrap">
+            <div class="lever-extremes"><span>⛱ Informal (shorts)</span><span>🎩 Black tie</span></div>
+            <input type="range" id="s-dress" min="0" max="4" step="1" value="2" oninput="updateLever('dress', this.value)" />
+            <div class="lever-value-chip" id="v-dress"></div>
+          </div>
+        </div>
+
+        <!-- Presència activa -->
+        <div class="field">
+          <label>Presència activa</label>
+          <div class="lever-wrap">
+            <div class="lever-extremes"><span>👤 Passar desapercebut</span><span>🤝 Saludar activament</span></div>
+            <input type="range" id="s-presence" min="0" max="4" step="1" value="2" oninput="updateLever('presence', this.value)" />
+            <div class="lever-value-chip" id="v-presence"></div>
+          </div>
+        </div>
+
+        <!-- Seients -->
+        <div class="field">
+          <label>Seients</label>
+          <div class="lever-wrap">
+            <div class="lever-extremes"><span>🚶 Sense seient</span><span>👑 Presidència reservada</span></div>
+            <input type="range" id="s-seat" min="0" max="3" step="1" value="1" oninput="updateLever('seat', this.value)" />
+            <div class="lever-value-chip" id="v-seat"></div>
+          </div>
+        </div>
+
+        <!-- Discurs -->
+        <div class="field" style="margin-bottom:0">
+          <label>Discurs</label>
+          <div class="lever-wrap">
+            <div class="lever-extremes"><span>🔇 Cap discurs</span><span>🎤 Discurs de 20'</span></div>
+            <input type="range" id="s-speech" min="0" max="4" step="1" value="0" oninput="updateLever('speech', this.value)" />
+            <div class="lever-value-chip" id="v-speech"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Assistència i motiu
+        </div>
+
+        <div class="field">
+          <label>Assistència del President</label>
+          <div class="pill-group">
+            <input type="radio" name="attendance" id="att-full" value="Tota la sessió" checked />
+            <label for="att-full">Tota la sessió</label>
+            <input type="radio" name="attendance" id="att-start" value="Només a l'inici" />
+            <label for="att-start">Només a l'inici</label>
+            <input type="radio" name="attendance" id="att-end" value="Només al final" />
+            <label for="att-end">Només al final</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Per què hi som <small style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af">(pot ser múltiple)</small></label>
+          <div class="tag-group">
+            <input type="checkbox" id="r-aj" value="Ajuntament" /><label for="r-aj">Ajuntament</label>
+            <input type="checkbox" id="r-gen" value="Generalitat" /><label for="r-gen">Generalitat</label>
+            <input type="checkbox" id="r-min" value="Ministeri" /><label for="r-min">Ministeri</label>
+            <input type="checkbox" id="r-corp" value="Soci corporatiu" /><label for="r-corp">Soci corporatiu</label>
+            <input type="checkbox" id="r-pres" value="President d'honor" /><label for="r-pres">President d'honor</label>
+            <input type="checkbox" id="r-inst" value="Institucional" /><label for="r-inst">Institucional</label>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label>Notes addicionals <small style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af">(opcional)</small></label>
+          <textarea id="f-notes" placeholder="Context, observacions, persones clau que hi assistiran..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-submit" onclick="submitEvent()">
+        Enviar al President →
+      </button>
+
+    </div><!-- /view-form -->
+
+    <!-- ── DASHBOARD VIEW ── -->
+    <div id="view-dashboard" class="view">
+      <div id="events-list">
+        <div class="loading"><div class="spinner"></div> Carregant events...</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Mobile nav -->
+<div class="mobile-nav">
+  <button onclick="showView('form')" id="mob-form" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Nou Event
+  </button>
+  <button onclick="showView('dashboard')" id="mob-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Events
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── Supabase init ──
+  const SUPA_URL = 'https://xfmbwxrxqvywcxkytyrx.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmbWJ3eHJ4cXZ5d2N4a3l0eXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODg5MjcsImV4cCI6MjA5MTk2NDkyN30.M9ApcDrgm5HAKWGZhpT19Mfp8jE68vuiwNb-tZkFjuM';
+  const { createClient } = supabase;
+  const db = createClient(SUPA_URL, SUPA_KEY);
+
+  // ── Lever config ──
+  const LEVERS = {
+    dress:    ['Informal (shorts)', 'Casual', 'Smart casual', 'Formal', 'Black tie'],
+    presence: ['Passar desapercebut', 'Presència discreta', 'Presència equilibrada', 'Visible', 'Saludar activament'],
+    seat:     ['Sense seient', 'Seient general', 'Seient preferent', 'Presidència reservada'],
+    speech:   ['Cap discurs', "Breu intervenció (5')", "Intervenció (10')", "Intervenció (15')", "Discurs (20')"]
+  };
+  const LEVER_MAX = { dress: 4, presence: 4, seat: 3, speech: 4 };
+
+  function updateLever(key, val) {
+    document.getElementById('v-' + key).textContent = LEVERS[key][val];
+  }
+  updateLever('dress', 2);
+  updateLever('presence', 2);
+  updateLever('seat', 1);
+  updateLever('speech', 0);
+
+  // ── View switching ──
+  let currentView = 'form';
+  function showView(view) {
+    currentView = view;
+    ['form', 'dashboard'].forEach(v => {
+      document.getElementById('view-' + v).classList.toggle('active', v === view);
+      const nb = document.getElementById('nav-' + v);
+      if (nb) nb.classList.toggle('active', v === view);
+      const mb = document.getElementById('mob-' + v);
+      if (mb) mb.classList.toggle('active', v === view);
+    });
+    const titles = { form: 'Nou Event', dashboard: 'Events del President' };
+    document.getElementById('topbar-title').textContent = titles[view];
+    document.getElementById('topbar-count').style.display = view === 'dashboard' ? '' : 'none';
+    if (view === 'dashboard') renderDashboard();
+  }
+
+  // ── Submit ──
+  async function submitEvent() {
+    const name     = document.getElementById('f-name').value.trim();
+    const date     = document.getElementById('f-date').value;
+    const time     = document.getElementById('f-time').value;
+    const location = document.getElementById('f-location').value.trim();
+
+    if (!name || !date) {
+      alert("Si us plau, omple el nom de l'event i la data.");
+      return;
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Enviant...';
+
+    const dress    = parseInt(document.getElementById('s-dress').value);
+    const presence = parseInt(document.getElementById('s-presence').value);
+    const seat     = parseInt(document.getElementById('s-seat').value);
+    const speech   = parseInt(document.getElementById('s-speech').value);
+    const attendance = document.querySelector('input[name="attendance"]:checked').value;
+    const reasons  = Array.from(document.querySelectorAll('.tag-group input:checked')).map(e => e.value);
+    const notes    = document.getElementById('f-notes').value.trim();
+
+    const { error } = await db.from('bg_events').insert({
+      name, date, time: time || null, location: location || null,
+      dress, presence, seat, speech, attendance, reasons,
+      notes: notes || null
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Enviar al President →';
+
+    if (error) {
+      alert('Error al guardar: ' + error.message);
+      return;
+    }
+
+    // Reset
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-date').value = '';
+    document.getElementById('f-time').value = '';
+    document.getElementById('f-location').value = '';
+    document.getElementById('f-notes').value = '';
+    document.getElementById('s-dress').value = 2;    updateLever('dress', 2);
+    document.getElementById('s-presence').value = 2; updateLever('presence', 2);
+    document.getElementById('s-seat').value = 1;     updateLever('seat', 1);
+    document.getElementById('s-speech').value = 0;   updateLever('speech', 0);
+    document.getElementById('att-full').checked = true;
+    document.querySelectorAll('.tag-group input').forEach(e => e.checked = false);
+
+    showToast('✓ Event enviat al President');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── Dashboard ──
+  const MONTHS = ['Gen','Feb','Mar','Abr','Mai','Jun','Jul','Ago','Set','Oct','Nov','Des'];
+
+  async function renderDashboard() {
+    const container = document.getElementById('events-list');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div> Carregant events...</div>';
+
+    const { data: events, error } = await db
+      .from('bg_events')
+      .select('*')
+      .order('date', { ascending: true });
+
+    if (error) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error: ${error.message}</p></div>`;
+      return;
+    }
+
+    const count = events.length;
+    const tc = document.getElementById('topbar-count');
+    tc.textContent = count + (count === 1 ? ' event' : ' events');
+
+    if (!count) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>Encara no hi ha events.<br>La directora n'ha d'afegir des de "Nou Event".</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = events.map(evt => {
+      const d = evt.date ? new Date(evt.date + 'T12:00:00') : null;
+      const day   = d ? d.getDate() : '—';
+      const month = d ? MONTHS[d.getMonth()] : '';
+      const timeStr = evt.time ? ` · ${evt.time.slice(0,5)}h` : '';
+
+      const dressPct    = Math.round((evt.dress / LEVER_MAX.dress) * 100);
+      const presencePct = Math.round((evt.presence / LEVER_MAX.presence) * 100);
+      const seatPct     = Math.round((evt.seat / LEVER_MAX.seat) * 100);
+      const speechPct   = Math.round((evt.speech / LEVER_MAX.speech) * 100);
+
+      const reasonBadges = (evt.reasons || []).length
+        ? evt.reasons.map(r => `<span class="badge badge-reason">${r}</span>`).join('')
+        : '';
+
+      const notesHtml = evt.notes
+        ? `<div class="ec-notes">📝 ${evt.notes}</div>` : '';
+
+      return `
+        <div class="event-card" id="ec-${evt.id}">
+          <div class="ec-header">
+            <div>
+              <div class="ec-name">${evt.name}</div>
+              <div class="ec-sub">📍 ${evt.location || '—'}${timeStr}</div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div class="ec-date-badge">
+                <div class="day">${day}</div>
+                <div class="month">${month}</div>
+              </div>
+              <button class="btn-danger" onclick="deleteEvent(${evt.id})" title="Eliminar">✕</button>
+            </div>
+          </div>
+
+          <div class="levers-grid">
+            ${ldBlock('Dress Code', LEVERS.dress[evt.dress], dressPct)}
+            ${ldBlock('Presència activa', LEVERS.presence[evt.presence], presencePct)}
+            ${ldBlock('Seients', LEVERS.seat[evt.seat], seatPct)}
+            ${ldBlock('Discurs', LEVERS.speech[evt.speech], speechPct)}
+          </div>
+
+          <div class="tags-row">
+            <span class="badge badge-att">${evt.attendance}</span>
+            ${reasonBadges}
+          </div>
+          ${notesHtml}
+        </div>`;
+    }).join('');
+  }
+
+  function ldBlock(label, value, pct) {
+    return `
+      <div class="ld-block">
+        <div class="ld-label">${label}</div>
+        <div class="ld-bar-track"><div class="ld-bar-fill" style="width:${pct}%"></div></div>
+        <div class="ld-val">${value}</div>
+      </div>`;
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('Eliminar aquest event?')) return;
+    await db.from('bg_events').delete().eq('id', id);
+    renderDashboard();
+  }
+
+  // ── Real-time updates ──
+  db.channel('bg_events_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bg_events' }, () => {
+      if (currentView === 'dashboard') renderDashboard();
+    })
+    .subscribe();
+</script>
+</body>
+</html>
