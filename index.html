@@ -355,27 +355,66 @@
     }
     .btn-danger:hover { color: var(--danger); background: #fef2f2; }
 
+    /* WhatsApp prompt panel */
+    #wa-prompt {
+      display: none;
+      margin-top: 14px;
+      background: #f0fdf4;
+      border: 1.5px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    #wa-prompt.show { display: block; }
+    #wa-prompt p {
+      font-size: 14px;
+      font-weight: 600;
+      color: #166534;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .wa-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
     .btn-whatsapp {
-      width: 100%;
-      margin-top: 12px;
-      padding: 14px 24px;
+      flex: 1;
+      min-width: 140px;
+      padding: 13px 18px;
       background: #25d366;
       color: #fff;
       border: none;
-      border-radius: 12px;
-      font-size: 15px;
+      border-radius: 10px;
+      font-size: 14px;
       font-weight: 700;
       font-family: var(--font);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
-      box-shadow: 0 4px 16px rgba(37,211,102,0.35);
+      gap: 8px;
+      transition: opacity 0.18s, transform 0.18s;
+      box-shadow: 0 3px 12px rgba(37,211,102,0.35);
     }
-    .btn-whatsapp:hover { opacity: 0.90; transform: translateY(-2px); box-shadow: 0 6px 22px rgba(37,211,102,0.45); }
+    .btn-whatsapp:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-whatsapp:active { transform: translateY(0); }
+    .btn-no-thanks {
+      flex: 1;
+      min-width: 120px;
+      padding: 13px 18px;
+      background: #fff;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-no-thanks:hover { background: var(--page-bg); color: var(--text); }
 
     /* Sidebar mini-list */
     .sb-mini-item {
@@ -768,11 +807,19 @@
         Enviar al President →
       </button>
 
-      <!-- WhatsApp share button -->
-      <button class="btn-whatsapp" onclick="shareWhatsApp()">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.413A9.953 9.953 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.946 7.946 0 0 1-4.073-1.117l-.292-.174-3.023.858.876-2.944-.19-.302A7.944 7.944 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
-        Compartir link de l'app per WhatsApp
-      </button>
+      <!-- WhatsApp prompt -->
+      <div id="wa-prompt">
+        <p>✅ Event enviat!<br>Vols compartir el link de l'app per WhatsApp?</p>
+        <div class="wa-actions">
+          <button class="btn-whatsapp" onclick="shareWhatsApp()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.413A9.953 9.953 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.946 7.946 0 0 1-4.073-1.117l-.292-.174-3.023.858.876-2.944-.19-.302A7.944 7.944 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+            Sí, compartir
+          </button>
+          <button class="btn-no-thanks" onclick="dismissWaPrompt()">
+            No gràcies
+          </button>
+        </div>
+      </div>
 
     </div><!-- /view-form -->
 
@@ -898,7 +945,9 @@
     document.getElementById('mem-president').checked = true;
     document.querySelectorAll('.tag-group input').forEach(e => e.checked = false);
 
-    showToast('✓ Event enviat al President');
+    // Show WhatsApp prompt instead of toast
+    document.getElementById('wa-prompt').classList.add('show');
+    document.getElementById('wa-prompt').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // ── Toast ──
@@ -1012,6 +1061,12 @@
     const url = 'https://jsanfeliu.github.io/jsanfeliu-events';
     const text = encodeURIComponent('Aqui tens el link de l\'app d\'events de Barcelona Global: ' + url);
     window.open('https://wa.me/?text=' + text, '_blank');
+    dismissWaPrompt();
+  }
+
+  function dismissWaPrompt() {
+    const p = document.getElementById('wa-prompt');
+    p.classList.remove('show');
   }
 
   // ── Sidebar mini-list ──
